@@ -2,7 +2,7 @@
 
 import datetime
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Path
 from sqlalchemy.orm import Session
 from app.exceptions.exceptions import ReservationException
 from app.dtos import schemas
@@ -16,10 +16,10 @@ router = APIRouter(
     responses={404: {"description" : "Not Found"}}
     )
 
-def check_member_role_admin(member_id: str = Header(...), db: Session = Depends(get_db)):
+def check_member_role_admin(authorization_id: str = Header(...), db: Session = Depends(get_db)):
     # DB에서 member_id로 역할을 조회
     try:
-        role = get_member_role(db, int(member_id))  # member_id는 str로 전달되므로 int로 변환
+        role = get_member_role(db, int(authorization_id))  # member_id는 str로 전달되므로 int로 변환
     except Exception as e:
         raise HTTPException(status_code=400, detail="Member not found or error fetching role")
     
@@ -43,11 +43,11 @@ def available_reservations(
 @router.post("", response_model=schemas.Reservation)
 def create_reservation(
     request: schemas.ReservationRequest,
-    member_id: int = Header(...),
+    authorization_id: int = Header(...),
     db: Session = Depends(get_db)
 ):
     try:
-        reservation = reservation_service.create_reservation_service(db, member_id, request.reservation_time_id, request.count)
+        reservation = reservation_service.create_reservation_service(db, authorization_id, request.reservation_time_id, request.count)
         return reservation
     except ReservationException as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -55,11 +55,11 @@ def create_reservation(
 # 고객의 모든 예약을 조회하는 API - CUSTOMER 전용
 @router.get("/customer", response_model=List[schemas.Reservation])
 def get_customer_reservations(
-    member_id: int = Header(...),
+    authorization_id: int = Header(...),
     db: Session = Depends(get_db)
 ):
     # 해당 member_id의 모든 예약을 조회
-    reservations = reservation_service.get_reservations_by_customer(db, member_id)
+    reservations = reservation_service.get_reservations_by_customer(db, authorization_id)
     
     if not reservations:
         raise HTTPException(status_code=404, detail="조회된 예약이 없습니다.")
@@ -103,9 +103,9 @@ def update_reservation(
     reservation_id: int,
     request: schemas.ReservationUpdateRequest,
     db: Session = Depends(get_db),
-    member_id: int = Header(...),
+    authorization_id: int = Header(...),
 ):
-    reservation = reservation_service.update_reservation(db, reservation_id, request.count, member_id)
+    reservation = reservation_service.update_reservation(db, reservation_id, request.count, authorization_id)
     return reservation
 
 
@@ -126,9 +126,9 @@ def update_reservation_by_admin(
 def delete_reservation(
     reservation_id: int,
     db: Session = Depends(get_db),
-    member_id: int = Header(...),
+    authorization_id: int = Header(...),
 ):
-    reservation = reservation_service.delete_reservation(db, reservation_id, member_id)
+    reservation = reservation_service.delete_reservation(db, reservation_id, authorization_id)
     return reservation
 
 # 고객 예약 삭제 API - ADMIN 전용
