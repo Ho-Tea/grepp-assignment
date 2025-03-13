@@ -131,3 +131,12 @@ def delete_reservation(
     reservation = reservation_service.delete_reservation(db, reservation_id, member_id)
     return reservation
 
+# 고객 예약 삭제 API - ADMIN 전용
+@router.delete("/customer-reservation/{reservation_id}", response_model=schemas.Reservation)
+def delete_reservation_by_admin(
+    reservation_id: int,
+    db: Session = Depends(get_db),
+    role: str = Depends(check_member_role_admin)
+):
+    reservation = reservation_service.delete_reservation_by_admin(db, reservation_id)
+    return reservation
