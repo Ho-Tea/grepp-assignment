@@ -141,3 +141,21 @@ def update_reservation(db: Session, reservation_id: int, count: int, member_id: 
     except Exception as e:
         db.rollback()  # 에러 발생 시 롤백
         raise ReservationException(f"예약 수정 중 오류가 발생했습니다: {str(e)}")
+    
+
+def update_reservation_by_admin(db: Session, reservation_id: int, count: int):
+    try:
+        # 예약 조회
+        reservation = db.query(Reservation).filter(Reservation.id == reservation_id).first()
+        if not reservation:
+            raise HTTPException(status_code=404, detail="예약을 찾을 수 없습니다.")
+    
+        # 예약 수정
+        reservation.count = count
+        db.commit()
+        db.refresh(reservation)
+    
+        return reservation
+    except Exception as e:
+        db.rollback()  # 에러 발생 시 롤백
+        raise ReservationException(f"예약 수정 중 오류가 발생했습니다: {str(e)}")
