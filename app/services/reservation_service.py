@@ -56,7 +56,7 @@ def create_reservation_service(db: Session, member_id: int, reservation_time_id:
     
         # 예약 시간 3일 전까지 신청 가능
         current_time = datetime.now(kst)
-        if reservation_time.date_time - current_time > timedelta(days=MIN_DAYS_BEFORE_EXAM):
+        if kst.localize(reservation_time.date_time) - current_time <= timedelta(days=MIN_DAYS_BEFORE_EXAM):
             raise ReservationException("예약은 시험 시작 3일 전까지 신청 가능합니다.")
     
         # 해당 예약 시간대의 총 예약 수 확인 (최대 5만명까지 예약 가능)
