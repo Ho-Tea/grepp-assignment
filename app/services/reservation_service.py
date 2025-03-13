@@ -11,7 +11,7 @@ from app.repositories.models import ReservationStatus
 from app.repositories.models import Member
 from app.exceptions.exceptions import ReservationException
 from datetime import datetime, timedelta
-
+from app.dtos.schemas import AvailableReservation
 
 # 한국 타임존 설정
 kst = pytz.timezone('Asia/Seoul')
@@ -30,9 +30,20 @@ def get_member_role(db: Session, member_id: int):
 
 
 def get_all_available_reservations(db: Session):
-    # total_count가 50,000 미만인 예약 시간 정보만 가져오기
-    available_reservations = db.query(ReservationTime).filter(ReservationTime.total_count < MAX_CONFIRMED_ATTENDEES).all()
-    return available_reservations
+    three_days_later = datetime.now(kst) + timedelta(days=MIN_DAYS_BEFORE_EXAM)
+    available_reservations = db.query(ReservationTime).filter(
+    ReservationTime.date_time >= three_days_later,  # 예약 시간이 3일 후 이상
+    ReservationTime.total_count < MAX_CONFIRMED_ATTENDEES  # 최대 인원수 기준 필터링
+    ).all()
+    available_reservations_dto = []
+    for reservation_time in available_reservations:
+        remaining_count = MAX_CONFIRMED_ATTENDEES - reservation_time.total_count
+        available_reservations_dto.append(AvailableReservation(
+                id=reservation_time.id,
+                date_time=reservation_time.date_time,
+                remaining_count=remaining_count
+            ))
+    return available_reservations_dto
 
 
 def create_reservation_service(db: Session, member_id: int, reservation_time_id: int, count: int):

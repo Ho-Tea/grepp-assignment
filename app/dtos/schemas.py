@@ -7,7 +7,7 @@ from app.repositories.models import ReservationStatus
 class AvailableReservation(BaseModel):
     id: int
     date_time: datetime
-    total_count: int
+    remaining_count: int
 
     class Config:
         orm_mode = True
