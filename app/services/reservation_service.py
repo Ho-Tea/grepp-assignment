@@ -82,3 +82,8 @@ def create_reservation_service(db: Session, member_id: int, reservation_time_id:
         db.rollback()  # 에러 발생 시 롤백
         raise ReservationException(f"예약 처리 중 오류가 발생했습니다: {str(e)}")
 
+
+def get_reservations_by_customer(db: Session, member_id: int):
+    # 특정 고객의 모든 예약 조회
+    reservations = db.query(Reservation).filter(Reservation.member_id == member_id).all()
+    return reservations
