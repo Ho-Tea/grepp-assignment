@@ -183,3 +183,20 @@ def delete_reservation(db: Session, reservation_id: int, member_id: int):
     except Exception as e:
         db.rollback()  # 에러 발생 시 롤백
         raise ReservationException(f"예약 삭제 중 오류가 발생했습니다: {str(e)}")
+    
+
+# 관리자 예약 삭제 서비스 - ADMIN 전용
+def delete_reservation_by_admin(db: Session, reservation_id: int):
+    try:
+        # 예약 조회
+        reservation = db.query(Reservation).filter(Reservation.id == reservation_id).first()
+        if not reservation:
+            raise HTTPException(status_code=404, detail="예약을 찾을 수 없습니다.")
+    
+        # 예약 삭제
+        db.delete(reservation)
+        db.commit()
+        return reservation
+    except Exception as e:
+        db.rollback()  # 에러 발생 시 롤백
+        raise ReservationException(f"예약 삭제 중 오류가 발생했습니다: {str(e)}")
