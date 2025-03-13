@@ -40,15 +40,14 @@ def available_reservations(
     return data
 
 # 고객 예약 생성 API - CUSTOMER, ADMIN 모두 가능
-@router.post("/create", response_model=schemas.Reservation)
+@router.post("", response_model=schemas.Reservation)
 def create_reservation(
-    reservation_time_id: int,
-    count: int,
+    request: schemas.ReservationRequest,
     member_id: int = Header(...),
     db: Session = Depends(get_db)
 ):
     try:
-        reservation = reservation_service.create_reservation_service(db, member_id, reservation_time_id, count)
+        reservation = reservation_service.create_reservation_service(db, member_id, request.reservation_time_id, request.count)
         return reservation
     except ReservationException as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -69,7 +68,7 @@ def get_customer_reservations(
 
 
 # 고객의 모든 예약을 조회하는 API - ADMIN 전용
-@router.get("/customer/{member_id}", response_model=List[schemas.Reservation])
+@router.get("/customer-reservation/{member_id}", response_model=List[schemas.Reservation])
 def get_customer_reservations_by_admin(
     member_id: int,
     role: str = Depends(check_member_role_admin),
@@ -98,5 +97,14 @@ def confirm_reservation(
         raise e
     
 
-
+# 고객 예약 수정 API - CUSTOMER 전용
+@router.put("/{reservation_id}", response_model=schemas.Reservation)
+def update_reservation(
+    reservation_id: int,
+    request: schemas.ReservationUpdateRequest,
+    db: Session = Depends(get_db),
+    member_id: int = Header(...),
+):
+    reservation = reservation_service.update_reservation(db, reservation_id, request.count, member_id)
+    return reservation
 
