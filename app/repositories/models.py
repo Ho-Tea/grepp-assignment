@@ -34,7 +34,7 @@ class Reservation(Base):
 
     # 예약 시간과 멤버와의 관계 설정
     reservation_time = relationship("ReservationTime", back_populates="reservations")
-    customer = relationship("Member", back_populates="reservations")
+    member = relationship("Member", back_populates="reservations")
 
 class ReservationTime(Base):
     __tablename__ = "reservation_times"
@@ -51,6 +51,6 @@ class Member(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=True)
-    role = Column(Enum(ReservationStatus), default=Role.CUSTOMER)  # 상태 (CUSTOMER 기본값)
+    role = Column(Enum(Role), default=Role.CUSTOMER)  # 상태 (CUSTOMER 기본값)
     # 멤버와 예약 테이블과의 관계 설정
     reservations = relationship("Reservation", back_populates="member")
