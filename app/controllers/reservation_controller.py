@@ -4,7 +4,7 @@ import datetime
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
-from app.exceptions import ReservationException
+from app.exceptions.exceptions import ReservationException
 from app.dtos import schemas
 from app.services import reservation_service
 from app.services.reservation_service import get_member_role

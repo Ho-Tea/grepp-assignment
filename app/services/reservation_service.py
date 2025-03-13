@@ -9,7 +9,7 @@ from app.repositories.models import Reservation
 from app.repositories.models import ReservationTime
 from app.repositories.models import ReservationStatus
 from app.repositories.models import Member
-from app.exceptions import ReservationException
+from app.exceptions.exceptions import ReservationException
 from datetime import datetime, timedelta
 
 
