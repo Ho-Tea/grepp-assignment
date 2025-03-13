@@ -23,3 +23,11 @@ class Reservation(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class ReservationRequest(BaseModel):
+    reservation_time_id: int
+    count: int
+
+class ReservationUpdateRequest(BaseModel):
+    count: int
