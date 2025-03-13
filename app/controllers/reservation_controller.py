@@ -4,10 +4,11 @@ import datetime
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
-
+from app.exceptions import ReservationException
 from app.dtos import schemas
 from app.services import reservation_service
-from app.config.database import SessionLocal
+from app.services.reservation_service import get_member_role
+from app.config.database import get_db
 
 router = APIRouter(
     prefix="/reservations", 
@@ -15,25 +16,39 @@ router = APIRouter(
     responses={404: {"description" : "Not Found"}}
     )
 
-# 데이터베이스 세션 의존성
-def get_db():
-    db = SessionLocal()
+def check_member_role(member_id: str = Header(...), db: Session = Depends(get_db)):
+    # DB에서 member_id로 역할을 조회
     try:
-        yield db
-    finally:
-        db.close()
+        role = get_member_role(db, int(member_id))  # member_id는 str로 전달되므로 int로 변환
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Member not found or error fetching role")
+    
+    # 역할이 Admin이면 접근 허용, 아니면 거부
+    if role != "Admin":
+        raise HTTPException(status_code=403, detail="Access forbidden: Admin role required.")
+    
+    return role
 
-# 간단한 역할 기반 인증 (헤더를 통해 역할과 사용자 ID 전달)
-def get_current_user(x_user_role: str = Header(...), x_user_id: str = Header(...)):
-    return {"role": x_user_role, "user_id": x_user_id}
-
-# 고객은 예약 신청이 가능한 시간과 인원을 알 수 있습니다.
+# 예약 신청이 가능한 시간과 인원을 알 수 있습니다. - USER, ADMIN 모두 가능
 @router.get("/available", response_model=List[schemas.AvailableReservation])
 def available_reservations(
     db: Session = Depends(get_db)
 ):
-    data = reservation_service.get_all_available_reservations_service(db)
+    data = reservation_service.get_all_available_reservations(db)
     if not data:
         raise HTTPException(status_code=404, detail="예약 가능한 일정 정보가 없습니다.")
     return data
 
+# 고객 예약 생성 API - USER, ADMIN 모두 가능
+@router.post("/create", response_model=schemas.Reservation)
+def create_reservation(
+    reservation_time_id: int,
+    count: int,
+    member_id: int = Header(...),
+    db: Session = Depends(get_db)
+):
+    try:
+        reservation = reservation_service.create_reservation_service(db, member_id, reservation_time_id, count)
+        return reservation
+    except ReservationException as e:
+        raise HTTPException(status_code=400, detail=str(e))
