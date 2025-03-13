@@ -82,3 +82,21 @@ def get_customer_reservations_by_admin(
         raise HTTPException(status_code=404, detail="조회된 예약이 없습니다.")
     
     return reservations
+
+
+# 예약 확정 API - ADMIN 전용
+@router.post("/confirm/{reservation_id}", response_model=schemas.Reservation)
+def confirm_reservation(
+    reservation_id: int,
+    db: Session = Depends(get_db),
+    role: str = Depends(check_member_role_admin)
+):
+    try:
+        reservation = reservation_service.confirm_reservation(db, reservation_id)
+        return reservation
+    except HTTPException as e:
+        raise e
+    
+
+
+
