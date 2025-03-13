@@ -2,12 +2,11 @@
 
 import datetime
 from pydantic import BaseModel
-from typing import Optional
 from app.repositories.models import ReservationStatus
 
 class AvailableReservation(BaseModel):
     id: int
-    date_time: str
+    date_time: datetime
     total_count: int
 
     class Config:
@@ -20,7 +19,7 @@ class Reservation(BaseModel):
     reservation_time_id: int
     count: int
     status: ReservationStatus
-    created_at: str
+    created_at: datetime
 
     class Config:
         orm_mode = True
