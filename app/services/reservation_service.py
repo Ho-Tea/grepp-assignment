@@ -116,3 +116,28 @@ def confirm_reservation(db: Session, reservation_id: int):
         db.rollback()  # 에러 발생 시 롤백
         raise ReservationException(f"예약 확정 처리 중 오류가 발생했습니다: {str(e)}")
     
+
+def update_reservation(db: Session, reservation_id: int, count: int, member_id: int):
+    try:
+        # 예약 조회
+        reservation = db.query(Reservation).filter(Reservation.id == reservation_id).first()
+        if not reservation:
+            raise HTTPException(status_code=404, detail="예약을 찾을 수 없습니다.")
+    
+        # 예약 수정 권한 체크
+        if reservation.member_id != member_id:
+            raise HTTPException(status_code=403, detail="예약을 수정할 수 있는 권한이 없습니다.")
+        
+        # 예약 상태가 CONFIRMED이면 수정할 수 없도록 함
+        if reservation.status == ReservationStatus.CONFIRMED:
+            raise HTTPException(status_code=403, detail="확정된 예약은 수정할 수 없습니다.")
+    
+        # 예약 수정
+        reservation.count = count
+        db.commit()
+        db.refresh(reservation)
+    
+        return reservation
+    except Exception as e:
+        db.rollback()  # 에러 발생 시 롤백
+        raise ReservationException(f"예약 수정 중 오류가 발생했습니다: {str(e)}")
