@@ -19,7 +19,7 @@ class ReservationStatus(PyEnum):
 
 # 권한 정의
 class Role(PyEnum):
-    USER = "USER"
+    CUSTOMER = "CUSTOMER"
     ADMIN = "ADMIN"
 
 class Reservation(Base):
@@ -51,6 +51,6 @@ class Member(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=True)
-    role = Column(Enum(ReservationStatus), default=Role.USER)  # 상태 (USER 기본값)
+    role = Column(Enum(ReservationStatus), default=Role.CUSTOMER)  # 상태 (CUSTOMER 기본값)
     # 멤버와 예약 테이블과의 관계 설정
     reservations = relationship("Reservation", back_populates="member")
