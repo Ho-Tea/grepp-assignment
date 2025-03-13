@@ -108,3 +108,15 @@ def update_reservation(
     reservation = reservation_service.update_reservation(db, reservation_id, request.count, member_id)
     return reservation
 
+
+# 고객 예약 수정 API - ADMIN 전용
+@router.put("/customer-reservation/{reservation_id}", response_model=schemas.Reservation)
+def update_reservation_by_admin(
+    reservation_id: int,
+    request: schemas.ReservationUpdateRequest,
+    db: Session = Depends(get_db),
+    role: str = Depends(check_member_role_admin)
+):
+    reservation = reservation_service.update_reservation_by_admin(db, reservation_id, request.count)
+    return reservation
+
