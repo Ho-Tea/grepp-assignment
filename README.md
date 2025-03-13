@@ -18,6 +18,9 @@ app/
 ├── dtos/
 │   └── schemas.py               # 데이터 전송 객체 (Pydantic 모델)
 │
+├── exceptions/
+│   └── exceptions.py             # 예외 처리 정의
+│
 └── main.py                      # FastAPI 애플리케이션 진입점
 ```
 
