@@ -1,5 +1,7 @@
 # grepp-assignment
 
+## 프로젝트 구조
+
 ```
 app/
 │
@@ -84,3 +86,75 @@ app/
 ---
 
 이 데이터는 서버가 시작될 때 자동으로 삽입됩니다.
+
+## ERD
+![ERD](image.png)
+
+## [API 명세](https://yellow-pizza-d72.notion.site/API-1b6a8205c9318079acbed0100ced2e58?pvs=4)
+
+
+
+## 환경설정 및 실행방법
+
+**참고사항**
+
+- **데이터베이스 초기화**: 프로젝트 실행 시 더미 데이터가 삽입되며, 서버 종료 시 테스트 데이터가 삭제되도록 lifespan을 활용하는 코드가 포함되어 있습니다.
+- **시간대 처리**: 프로젝트에서는 pytz를 사용하여 한국 시간(KST)을 설정하고 있습니다.
+
+> **Python**: Python 3.10 이상이 설치되어 있어야 하며, 가상환경(.venv)을 생성할 수 있어야 합니다.
+**PostgreSQL**: 데이터베이스 서버가 설치되어 실행 중이어야 하며, `app/config/database.py`에 올바른 연결 문자열이 설정되어 있어야 합니다.
+> 
+
+### 실행 방법 1
+
+- 프로젝트에 포함되어있는 `run.sh` 실행 혹은 `run.bat` 실행하는 방법
+
+**실행권한 부여**
+
+> **Mac**
+> 
+
+```java
+chmod +x run.sh
+./run.sh
+```
+
+> **Window**
+> 
+
+```java
+run.bat
+```
+
+### 실행 방법 2
+
+> **Mac**
+> 
+
+```java
+// 해당 프로젝트 내에서
+
+source .venv/bin/activate
+
+# 의존성 설치 (이미 설치되어 있다면 건너뛰어도 됩니다)
+pip install -r requirements.txt
+
+# Uvicorn을 사용하여 FastAPI 앱 실행 (코드 변경 시 자동 재시작)
+uvicorn app.main:app --reload
+```
+
+> **Window**
+> 
+
+```java
+// 해당 프로젝트 내에서
+
+// 가상환경 활성화 (가상환경 이름이 .venv인 경우)
+call .venv\Scripts\activate
+
+// 의존성 설치 (필요한 경우, 이미 설치되어 있다면 건너뛰어도 됩니다)
+pip install -r requirements.txt
+
+// Uvicorn을 사용하여 FastAPI 앱 실행 (코드 변경 시 자동 재시작)
+uvicorn app.main:app --reload
+```
