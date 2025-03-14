@@ -19,13 +19,13 @@ router = APIRouter(
 def check_member_role_admin(authorization_id: str = Header(...), db: Session = Depends(get_db)):
     # DB에서 member_id로 역할을 조회
     try:
-        role = get_member_role(db, int(authorization_id))  # member_id는 str로 전달되므로 int로 변환
+        role = get_member_role(db, int(authorization_id))
     except Exception as e:
-        raise HTTPException(status_code=400, detail="Member not found or error fetching role")
+        raise HTTPException(status_code=400, detail= str(e))
     
     # 역할이 Admin이면 접근 허용, 아니면 거부
-    if role != "Admin":
-        raise HTTPException(status_code=403, detail="Access forbidden: Admin role required.")
+    if role.value != "ADMIN":
+        raise HTTPException(status_code=403, detail="권한이 없습니다.")
     
     return role
 
@@ -47,7 +47,7 @@ def create_reservation(
     db: Session = Depends(get_db)
 ):
     try:
-        reservation = reservation_service.create_reservation_service(db, authorization_id, request.reservation_time_id, request.count)
+        reservation = reservation_service.create_reservation(db, authorization_id, request.reservation_time_id, request.count)
         return reservation
     except ReservationException as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -59,7 +59,7 @@ def get_customer_reservations(
     db: Session = Depends(get_db)
 ):
     # 해당 member_id의 모든 예약을 조회
-    reservations = reservation_service.get_reservations_by_customer(db, authorization_id)
+    reservations = reservation_service.get_reservations_by(db, authorization_id)
     
     if not reservations:
         raise HTTPException(status_code=404, detail="조회된 예약이 없습니다.")
@@ -75,7 +75,7 @@ def get_customer_reservations_by_admin(
     db: Session = Depends(get_db)
 ):
     # 해당 member_id의 모든 예약을 조회
-    reservations = reservation_service.get_reservations_by_customer(db, member_id)
+    reservations = reservation_service.get_reservations_by(db, member_id)
     
     if not reservations:
         raise HTTPException(status_code=404, detail="조회된 예약이 없습니다.")
@@ -93,8 +93,8 @@ def confirm_reservation(
     try:
         reservation = reservation_service.confirm_reservation(db, reservation_id)
         return reservation
-    except HTTPException as e:
-        raise e
+    except ReservationException as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
 
 # 고객 예약 수정 API - CUSTOMER 전용
@@ -105,8 +105,11 @@ def update_reservation(
     db: Session = Depends(get_db),
     authorization_id: int = Header(...),
 ):
-    reservation = reservation_service.update_reservation(db, reservation_id, request.count, authorization_id)
-    return reservation
+    try:
+        reservation = reservation_service.update_reservation(db, reservation_id, request.count, authorization_id)
+        return reservation
+    except ReservationException as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # 고객 예약 수정 API - ADMIN 전용
@@ -117,8 +120,11 @@ def update_reservation_by_admin(
     db: Session = Depends(get_db),
     role: str = Depends(check_member_role_admin)
 ):
-    reservation = reservation_service.update_reservation_by_admin(db, reservation_id, request.count)
-    return reservation
+    try:
+        reservation = reservation_service.update_reservation_by_admin(db, reservation_id, request.count)
+        return reservation
+    except ReservationException as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 # 고객 예약 삭제 API - CUSTOMER 전용
@@ -128,8 +134,11 @@ def delete_reservation(
     db: Session = Depends(get_db),
     authorization_id: int = Header(...),
 ):
-    reservation = reservation_service.delete_reservation(db, reservation_id, authorization_id)
-    return reservation
+    try:
+        reservation = reservation_service.delete_reservation(db, reservation_id, authorization_id)
+        return reservation
+    except ReservationException as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 # 고객 예약 삭제 API - ADMIN 전용
 @router.delete("/customer-reservation/{reservation_id}", response_model=schemas.Reservation)
@@ -138,5 +147,8 @@ def delete_reservation_by_admin(
     db: Session = Depends(get_db),
     role: str = Depends(check_member_role_admin)
 ):
-    reservation = reservation_service.delete_reservation_by_admin(db, reservation_id)
-    return reservation
+    try:
+        reservation = reservation_service.delete_reservation_by_admin(db, reservation_id)
+        return reservation
+    except ReservationException as e:
+        raise HTTPException(status_code=400, detail=str(e))
