@@ -30,7 +30,7 @@ class Reservation(Base):
     member_id = Column(Integer, ForeignKey('members.id'), nullable=False)  # member 테이블과의 관계
     count = Column(Integer, nullable=True)  # 예비 참가자 수
     status = Column(Enum(ReservationStatus), default=ReservationStatus.PENDING)  # 상태 (PENDING 기본값)
-    created_at = Column(DateTime, default=datetime.datetime.now(kst))
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(kst))
 
     # 예약 시간과 멤버와의 관계 설정
     reservation_time = relationship("ReservationTime", back_populates="reservations")
