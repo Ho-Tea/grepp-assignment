@@ -25,16 +25,16 @@ def get_member_role(db: Session, member_id: int):
     # DB에서 member_id로 해당 Member를 조회하고, 역할을 반환
     member = db.query(Member).filter(Member.id == member_id).first()
     if not member:
-        raise Exception("Member not found")
+        raise ReservationException("해당하는 멤버를 찾을 수 없습니다.")
     return member.role
 
 
 def get_all_available_reservations(db: Session):
     three_days_later = datetime.now(kst) + timedelta(days=MIN_DAYS_BEFORE_EXAM)
     available_reservations = db.query(ReservationTime).filter(
-    ReservationTime.date_time >= three_days_later,  # 예약 시간이 3일 후 이상
-    ReservationTime.total_count < MAX_CONFIRMED_ATTENDEES  # 최대 인원수 기준 필터링
-    ).all()
+        ReservationTime.date_time >= three_days_later,  # 예약 시간이 3일 후 이상
+        ReservationTime.total_count < MAX_CONFIRMED_ATTENDEES  # 최대 인원수 기준 필터링
+        ).all()
     available_reservations_dto = []
     for reservation_time in available_reservations:
         remaining_count = MAX_CONFIRMED_ATTENDEES - reservation_time.total_count
@@ -46,7 +46,7 @@ def get_all_available_reservations(db: Session):
     return available_reservations_dto
 
 
-def create_reservation_service(db: Session, member_id: int, reservation_time_id: int, count: int):
+def create_reservation(db: Session, member_id: int, reservation_time_id: int, count: int):
     try:
         # 예약 시간 정보 조회
         reservation_time = db.query(ReservationTime).filter(ReservationTime.id == reservation_time_id).first()
@@ -56,8 +56,8 @@ def create_reservation_service(db: Session, member_id: int, reservation_time_id:
     
         # 예약 시간 3일 전까지 신청 가능
         current_time = datetime.now(kst)
-        if kst.localize(reservation_time.date_time) - current_time <= timedelta(days=MIN_DAYS_BEFORE_EXAM):
-            raise ReservationException("예약은 시험 시작 3일 전까지 신청 가능합니다.")
+        if kst.localize(reservation_time.date_time) - current_time < timedelta(days=MIN_DAYS_BEFORE_EXAM):
+            raise ReservationException("예약은 시험 시작 3일 전까지만 신청 가능합니다.")
     
         # 해당 예약 시간대의 총 예약 수 확인 (최대 5만명까지 예약 가능)
         # 예약된 참가자 수를 가져올 때, 상태가 CONFIRMED인 예약만 포함하도록 필터링
@@ -78,8 +78,8 @@ def create_reservation_service(db: Session, member_id: int, reservation_time_id:
         )
         # 예약 데이터 추가
         db.add(new_reservation)
-        db.commit()  # 트랜잭션을 한 번만 커밋하여 모든 변경사항을 반영
-        db.refresh(new_reservation)  # 새로 고침하여 추가된 예약 정보를 업데이트
+        db.commit()
+        db.refresh(new_reservation)
         return new_reservation
     
     except Exception as e:
@@ -87,7 +87,7 @@ def create_reservation_service(db: Session, member_id: int, reservation_time_id:
         raise ReservationException(f"예약 처리 중 오류가 발생했습니다: {str(e)}")
 
 
-def get_reservations_by_customer(db: Session, member_id: int):
+def get_reservations_by(db: Session, member_id: int):
     # 특정 고객의 모든 예약 조회
     reservations = db.query(Reservation).filter(Reservation.member_id == member_id).all()
     return reservations
@@ -111,8 +111,7 @@ def confirm_reservation(db: Session, reservation_id: int):
             .scalar() or 0
         if total_reserved_count + reservation.count > MAX_CONFIRMED_ATTENDEES:
             raise HTTPException(status_code=400, detail="예약 가능한 최대 인원을 초과하였습니다.")
-    
-    
+        
         # 예약 확정
         reservation.status = ReservationStatus.CONFIRMED
         # 예약 시간의 총 예약 수 증가
@@ -120,7 +119,6 @@ def confirm_reservation(db: Session, reservation_id: int):
         db.commit()
         db.refresh(reservation)
         db.refresh(reservation_time)
-
         return reservation
 
     except Exception as e:
